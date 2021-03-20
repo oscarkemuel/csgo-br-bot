@@ -2,7 +2,7 @@
 
 <img src="./src/assets/images-repository/img1.png" alt="exemplo imagem" width="70%" >
 
-> Bot para telegram que envia para o grupo <a href="https://t.me/csgobrbot">https://t.me/csgobrbot</a> uma lista de jogos dos times brasileiros que jogam fora do brasil.
+> Bot para telegram que envia para o grupo <a href="https://t.me/csgobrbot" target="_blank">https://t.me/csgobrbot</a> uma lista de jogos dos times brasileiros que jogam fora do brasil.
 > Lista de times: MIBR, FURIA, paiN, Liquid, GODSENT, TeamOne, FaZe, Sharks.
 
 ## 🚀 Instalando CS:GO BRASIL BOT
