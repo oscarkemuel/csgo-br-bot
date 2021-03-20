@@ -38,10 +38,10 @@ Para contribuir com Pokedex, siga estas etapas:
 <table>
   <tr>
     <td align="center">
-      <a href="#">
-        <img src="https://avatars.githubusercontent.com/u/34771800?s=60&v=4" width="100px;" alt="Foto do Iuri Silva no GitHub"/><br>
+      <a href="https://github.com/oscarkemuel/">
+        <img src="https://avatars.githubusercontent.com/u/34771800?s=400&u=54cfbcc5315bcd6e14c23a519635f0f53a7cd0f4&v=4" width="100px;" alt="Foto do Oscar Kemuel no GitHub"/><br>
         <sub>
-          <b>Iuri Silva</b>
+          <b>Oscar Kemuel</b>
         </sub>
       </a>
     </td>
