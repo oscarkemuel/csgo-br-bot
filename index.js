@@ -10,37 +10,37 @@ const Telegram = require('telegraf').Telegram
 
 app.use(cors())
 
-function createMessage(matches){
-  let message = '\nPRÓXIMOS JOGOS\n';
-  message = message.concat('------------------------------------------------\n')
-                  
-  matches.map((matche) => {
-
-    // format date
-    let date = matche.date.toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"});
-    if (date == new Date().toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"})){
-      date = 'HOJE'
-    }
-
-    // format start-time
-    let time = matche.date.toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"})
-    time = time.substring(0, 5);
-
-    if(matche.game){
-      message = message.concat('------------------------------------------------')
-      const bodyMessage = `\n${matche.name_1} vs ${matche.name_2}\n${date} - ${time}\n${matche.event} \n`;
-      message = message.concat(bodyMessage)
-    }else{
-      message = message.concat(`${matche.message}\n`)
-    }
-  })
-
-  message = message.concat('------------------------------------------------')
-  return message;
-}
-
-async function getMatchesBR(team){
-  try{
+app.get('/send-message', (req, res) => {
+  function createMessage(matches){
+    let message = '\nPRÓXIMOS JOGOS\n';
+    message = message.concat('------------------------------------------------\n')
+                    
+    matches.map((matche) => {
+  
+      // format date
+      let date = matche.date.toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"});
+      if (date == new Date().toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"})){
+        date = 'HOJE'
+      }
+  
+      // format start-time
+      let time = matche.date.toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"})
+      time = time.substring(0, 5);
+  
+      if(matche.game){
+        message = message.concat('------------------------------------------------')
+        const bodyMessage = `\n${matche.name_1} vs ${matche.name_2}\n${date} - ${time}\n${matche.event} \n`;
+        message = message.concat(bodyMessage)
+      }else{
+        message = message.concat(`${matche.message}\n`)
+      }
+    })
+  
+    message = message.concat('------------------------------------------------')
+    return message;
+  }
+  
+  async function getMatchesBR(team){
     const response = await axios.get('https://hltv-api.vercel.app/api/matches')
     const data = response.data
     const teamName = data.filter((matche) => (matche.teams[0].name == team || matche.teams[1].name == team))
@@ -64,37 +64,32 @@ async function getMatchesBR(team){
     }
 
     return body;
-  } catch(err){
-    console.log(err);
-    return `error na requisição`;
   }
-}
-
-async function getMessage() {
-  const teams = data.teams;
-  const matches = [];
-
-  const promises = teams.map(async (team) => {
-    const matcheMessage = await getMatchesBR(team)
-    matches.push(matcheMessage);
-  })
-
-  await Promise.all(promises);
-
-  const sortedMatches = matches.slice().sort((a, b) => b.date - a.date).reverse();
-  const message = createMessage(sortedMatches);
-
-  const telegram = new Telegram(process.env.APP_TOKEN)
-  telegram.sendMessage(process.env.CHAT_ID, message)
-}
-
-app.get('/send-message', (req, res) => {
-  try {
-    getMessage()
-    res.send('Mensagem enviada!')
-  } catch (error) {
-    res.send('Houve algum problema!')
+  
+  async function getMessage() {
+    try {
+      const teams = data.teams;
+      const matches = [];
+    
+      const promises = teams.map(async (team) => {
+        const matcheMessage = await getMatchesBR(team)
+        matches.push(matcheMessage);
+      })
+    
+      await Promise.all(promises);
+    
+      const sortedMatches = matches.slice().sort((a, b) => b.date - a.date).reverse();
+      const message = createMessage(sortedMatches);
+    
+      const telegram = new Telegram(process.env.APP_TOKEN)
+      telegram.sendMessage(process.env.CHAT_ID, message)
+      res.send('Mensagem enviada!')
+    } catch (error) {
+      res.send('Houve algum problema!!')
+    }
   }
+
+  getMessage()
 })
 
 app.listen(process.env.PORT || 3000, () => console.log('Server on'))
