@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
+const TinyURL = require('tinyurl');
+
 const axios = require('axios').default
 const data = require('./data.json');
 const Telegram = require('telegraf').Telegram
@@ -11,12 +13,11 @@ const Telegram = require('telegraf').Telegram
 app.use(cors())
 
 app.get('/send-message', (req, res) => {
-  function createMessage(matches){
+  async function createMessage(matches){
     let message = '\nPRÓXIMOS JOGOS\n';
     message = message.concat('------------------------------------------------\n')
                     
-    matches.map((matche) => {
-  
+    await Promise.all(matches.map(async (matche) => {
       // format date
       let date = matche.date.toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"});
       if (date == new Date().toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"})){
@@ -28,13 +29,18 @@ app.get('/send-message', (req, res) => {
       time = time.substring(0, 5);
   
       if(matche.game){
-        message = message.concat('------------------------------------------------')
         const bodyMessage = `\n${matche.name_1} vs ${matche.name_2}\n${date} - ${time}\n${matche.event} \n`;
-        message = message.concat(bodyMessage)
+        
+        await TinyURL.shorten(`${matche.url}`).then(function(res) {
+          message = message.concat('------------------------------------------------')
+          message = message.concat(bodyMessage)
+          message = message.concat(`Link: ${res}\n`)
+        })
+
       }else{
         message = message.concat(`${matche.message}\n`)
       }
-    })
+    }))
   
     message = message.concat('------------------------------------------------')
     return message;
@@ -61,6 +67,7 @@ app.get('/send-message', (req, res) => {
       name_1: matche.teams[0].name,
       name_2: matche.teams[1].name,
       date: new Date(matche.time),
+      url: 'https:/www.hltv.org' + matche.link,
     }
 
     return body;
@@ -79,7 +86,7 @@ app.get('/send-message', (req, res) => {
       await Promise.all(promises);
     
       const sortedMatches = matches.slice().sort((a, b) => b.date - a.date).reverse();
-      const message = createMessage(sortedMatches);
+      const message = await createMessage(sortedMatches);
     
       const telegram = new Telegram(process.env.APP_TOKEN)
       telegram.sendMessage(process.env.CHAT_ID, message)
