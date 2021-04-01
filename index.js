@@ -88,9 +88,9 @@ app.get('/send-message', (req, res) => {
       const sortedMatches = matches.slice().sort((a, b) => b.date - a.date);
       const message = await createMessage(sortedMatches);
     
-      // const telegram = new Telegram(process.env.APP_TOKEN)
-      // telegram.sendMessage(process.env.CHAT_ID, message)
-      console.log(message)
+      const telegram = new Telegram(process.env.APP_TOKEN)
+      telegram.sendMessage(process.env.CHAT_ID, message)
+      // console.log(message)
       res.send('Mensagem enviada!')
     } catch (error) {
       res.send('Houve algum problema!!')
