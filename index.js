@@ -12,6 +12,48 @@ const Telegram = require('telegraf').Telegram
 
 app.use(cors())
 
+async function getResults(){
+  let results = [];
+  const response = await axios.get('https://hltv-api.vercel.app/api/results')
+  const data = response.data
+  // console.log(data);
+
+  teams.teams.forEach(team => {
+    const games = data.filter((e) => e.team1.name == team || e.team2.name == team)
+    const noGame = {
+      message: `${team}: sem resultados antecedentes`,
+      time: new Date
+    }
+    games.length > 0 ? results.push(games[0]) : null
+  });
+
+  async function returnNewLink(url){
+    let newLink;
+    await TinyURL.shorten(`${url}`).then(function(res) { newLink = res })
+    return newLink;
+  }
+
+  async function newLink(){
+    await Promise.all(results.map(async (e) => {
+      if(e.matchId){
+        url = `https://www.hltv.org${e.matchId}`
+        const newLink = await returnNewLink(url)
+        e.matchId = newLink
+      }
+    }))
+  }
+
+  await newLink()
+
+  results.sort(function compare(a, b) {
+    var dateA = new Date(a.time);
+    var dateB = new Date(b.time);
+    return dateA - dateB;
+  });
+
+  return results;
+}
+
 async function getMatches(){
   let matches = [];
   const response = await axios.get('https://hltv-api.vercel.app/api/matches')
@@ -54,7 +96,7 @@ async function getMatches(){
 }
 
 app.get('/send-message', (req, res) => {
-  async function createMessage(matches){
+  async function createMessageMatches(matches){
     let message = '\nPRÓXIMOS JOGOS\n';
     message = message.concat('------------------------------------------------\n')
                     
@@ -83,15 +125,46 @@ app.get('/send-message', (req, res) => {
     message = message.concat('------------------------------------------------')
     return message;
   }
+
+  async function createMessageResults(results){
+    let message = '\nRESULTADOS\n';
+
+    if(results.length < 1){
+      message = message.concat('------------------------------------------------')
+      message = message.concat('Sem resultados')
+    }else{
+      await Promise.all(results.map(async (result) => {
+        // format date
+        const dateNew = new Date(result.time)
+        let date = dateNew.toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"});
+  
+        if(result.matchId){
+          message = message.concat('------------------------------------------------\n')
+          const bodyMessage = `${result.team1.name} ${result.team1.result} vs ${result.team2.result} ${result.team2.name} \n`;
+          message = message.concat(bodyMessage)
+          message = message.concat(`${result.event} - ${date}\n`)
+          message = message.concat(`${result.matchId}\n`)
+        }
+      }))
+    }
+  
+    message = message.concat('------------------------------------------------')
+    return message;
+  }
   
   async function getMessage() {
     try {
       const matches = await getMatches();
-      const message = await createMessage(matches);
+      const results = await getResults();
+      const messageMatches = await createMessageMatches(matches);
+      const messageResults = await createMessageResults(results);
     
       const telegram = new Telegram(process.env.APP_TOKEN)
-      telegram.sendMessage(process.env.CHAT_ID, message)
-      // console.log(message)
+      await telegram.sendMessage(process.env.CHAT_ID, messageResults)
+      telegram.sendMessage(process.env.CHAT_ID, messageMatches)
+
+      // console.log(messageMatches)
+      // console.log(messageResults)
       res.send('Mensagem enviada!')
     } catch (error) {
       console.log(error);
