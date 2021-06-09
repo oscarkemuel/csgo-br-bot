@@ -14,7 +14,7 @@ app.use(cors())
 
 async function getResults(){
   let results = [];
-  const response = await axios.get('https://hltv-api.vercel.app/api/results')
+  const response = await axios.get('https://hltv-api.vercel.app/api/results.json')
   const data = response.data
   // console.log(data);
 
@@ -56,7 +56,7 @@ async function getResults(){
 
 async function getMatches(){
   let matches = [];
-  const response = await axios.get('https://hltv-api.vercel.app/api/matches')
+  const response = await axios.get('https://hltv-api.vercel.app/api/matches.json')
   const data = response.data
 
   teams.teams.forEach(team => {
