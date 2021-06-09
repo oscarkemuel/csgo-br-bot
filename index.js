@@ -168,6 +168,8 @@ app.get('/send-message', (req, res) => {
       res.send('Mensagem enviada!')
     } catch (error) {
       console.log(error);
+      const telegram = new Telegram(process.env.APP_TOKEN)
+      await telegram.sendMessage(process.env.CHAT_ID, 'Problemas técnicos!')
       res.send('Houve algum problema!!')
     }
   }
