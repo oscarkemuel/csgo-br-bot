@@ -8,14 +8,20 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "hltv-api": "^2.1.0",
     "telegraf": "^4.2.1",
-    "tinyurl": "^1.1.7"
+    "tinyurl": "^1.1.7",
+    "tinyurl-api": "^1.0.1"
   },
   "devDependencies": {
-    "nodemon": "^2.0.7"
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
+    "nodemon": "^2.0.7",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.4.4"
   },
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "ts-node src/server.ts",
+    "dev": "ts-node-dev --inspect --transpile-only --ignore-watch node_modules --respawn src/server.ts"
   }
 }
