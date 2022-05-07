@@ -1,4 +1,4 @@
-import HLTV from 'hltv-api';
+import HLTV, {  MatchPreview, Match, FullMatchResult, GameType } from 'hltv';
 import tinyurl from 'tinyurl-api';
 import teams from '../data.json';
 
@@ -20,6 +20,10 @@ interface IMatche {
   teams: ITeam[];
 }
 
+interface IMatchTemp extends Match{
+  link?: string;
+}
+
 interface ITeamResult extends ITeam {
   result: number;
 }
@@ -33,9 +37,26 @@ interface IResult {
   matchId: string;
 }
 
-async function newLinkToMatche(matches: IMatche[]){
+function formatDate(date: string) {
+  var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
+
+  if (month.length < 2) 
+      month = '0' + month;
+  if (day.length < 2) 
+      day = '0' + day;
+
+  return [year, month, day].join('-');
+}
+
+async function newLinkToMatche(matches: IMatchTemp[]){
   await Promise.all(matches.map(async (e) => {
-    let url = `https://www.hltv.org${e.link}`;
+    const mathLink = `${e.id}/${e.team1?.name}-vs-${e.team2?.name}-${e.event.name.toLowerCase().replace(' ', '-')}`;
+
+    let url = `https://www.hltv.org/matches/${mathLink}`;
+    
     const newLink = await tinyurl(url);
     e.link = newLink;
   }))
@@ -50,54 +71,60 @@ async function newLinkToResult(matches: IResult[]){
 }
 
 export async function getMatches() {
-  let gamesPerTeam: IMatche[] = [];
+  let gamesPerTeam: Match[] = [];
   
-  const matches: IMatche[] = await HLTV.getMatches();
-  teams.teams.forEach(team => {
+  const matches = await HLTV.getMatches();
+
+  for await (const team of teams.teams) {
     const game = matches.filter((matche) => {
-      return matche.teams[0].name == team || matche.teams[1].name == team;
+      return (matche.team1 !== undefined &&  matche.team1.id == team.id) || 
+             (matche.team2 !== undefined &&  matche.team2.id == team.id)
     });
 
-    game[0] !== undefined && gamesPerTeam.push(game[0]);
-  });
+    if(game[0] !== undefined){
+      const math = await HLTV.getMatch({ id: game[0].id });
+      gamesPerTeam.push(math);
+    }
+  }
 
   await newLinkToMatche(gamesPerTeam);
 
   gamesPerTeam.sort(function compare(a, b) {
-    var dateA = new Date(a.time);
-    var dateB = new Date(b.time);
+    var dateA = a.date;
+    var dateB = b.date;
     
-    return Math.abs(<any>dateA - <any>dateB);
+    return dateA! - dateB!;
   });
 
   return gamesPerTeam;
 }
 
 export async function getResults() {
-  let gamesPerTeam: IResult[] = [];
-  
-  const matches: IResult[] = await HLTV.getResults();
-  teams.teams.forEach(team => {
-    const game = matches.filter((matche) => {
-      return matche.team1.name == team || matche.team2.name == team;
-    });
+  let gamesPerTeam: FullMatchResult[] = [];
+  const date = formatDate(new Date(new Date().getTime() - 24*60*60*1000).toLocaleString());
+  console.log(date)
 
-    game[0] !== undefined && gamesPerTeam.push(game[0]);
-  });
+  const games = await HLTV.getResults({ teamIds: teams.teams.map(team => team.id), endDate: date, startDate: date });
 
-  await newLinkToResult(gamesPerTeam);
+  for (let i = 0; i < 8; i++) {
+    if(games[i]) gamesPerTeam.push(games[i]);
+  }
+
+  // await newLinkToResult(gamesPerTeam);
 
   gamesPerTeam.sort(function compare(a, b) {
-    var dateA = new Date(a.time);
-    var dateB = new Date(b.time);
+    var dateA = a.date;
+    var dateB = b.date;
     
-    return Math.abs(<any>dateA - <any>dateB);
+    return dateA! - dateB!;
   });
 
   return gamesPerTeam;
 }
 
-export async function createMessageMatches(matches: IMatche[]){
+
+
+export async function createMessageMatches(matches: IMatchTemp[]){
   let message = '\nPRÓXIMOS JOGOS\n';
 
   if(matches.length < 1){
@@ -106,7 +133,7 @@ export async function createMessageMatches(matches: IMatche[]){
   }else{
     await Promise.all(matches.map(async (matche) => {
       // format date
-      const dateNew = new Date(matche.time);
+      const dateNew = new Date(matche.date!);
       let date = dateNew.toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"});
       if (date == new Date().toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"})){
         date = 'HOJE';
@@ -116,7 +143,7 @@ export async function createMessageMatches(matches: IMatche[]){
       time = time.substring(0, 5);
   
       message = message.concat('------------------------------------------------\n');
-      const bodyMessage = `${matche.teams[0].name} vs ${matche.teams[1].name}\n${date} - ${time}\n${matche.event.name} \n`;
+      const bodyMessage = `${matche.team1!.name} vs ${matche.team2!.name}\n${date} - ${time} - ${matche.format?.location}\n${matche.event.name} \n`;
       message = message.concat(bodyMessage);
       message = message.concat(`${matche.link}\n`);
     }))

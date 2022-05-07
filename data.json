@@ -1,13 +1,36 @@
 {
-  "teams":[
-    "MIBR", 
-    "FURIA", 
-    "paiN", 
-    "Liquid", 
-    "GODSENT", 
-    "TeamOne",
-    "Sharks",
-    "00Nation",
-    "Imperial"
+  "teams": [
+    {
+      "id": 9215,
+      "name": "MIBR"
+    },
+    {
+      "id": 8297,
+      "name": "FURIA"
+    },
+    {
+      "id": 4773,
+      "name": "paiN"
+    },
+    {
+      "id": 6902,
+      "name": "GODSENT"
+    },
+    {
+      "id": 6947,
+      "name": "TeamOne"
+    },
+    {
+      "id": 8113,
+      "name": "Sharks"
+    },
+    {
+      "id": 11309,
+      "name": "00Nation"
+    },
+    {
+      "id": 9455,
+      "name": "Imperial"
+    }
   ]
 }

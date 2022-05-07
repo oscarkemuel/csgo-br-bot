@@ -6,6 +6,7 @@ const app = express();
 
 import { Telegraf } from "telegraf";
 import { getMatches, getResults, createMessageMatches, createMessageResults } from './functions';
+// import { getMatches, createMessageMatches, createMessageResults } from './functions';
 
 app.use(cors());
 
@@ -15,11 +16,11 @@ app.get('/send-message', (req, res) => {
   async function getMessage() {
     try {
       const matches = await getMatches();
-      const results = await getResults();
+      // const results = await getResults();
       const messageMatches = await createMessageMatches(matches);
-      const messageResults = await createMessageResults(results);
+      // const messageResults = await createMessageResults(results);
     
-      await telegram.sendMessage(process.env.CHAT_ID!, messageResults);
+      // await telegram.sendMessage(process.env.CHAT_ID!, messageResults);
       await telegram.sendMessage(process.env.CHAT_ID!, messageMatches);
 
       res.send('Mensagem enviada!');
