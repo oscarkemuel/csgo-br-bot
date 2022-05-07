@@ -1,6 +1,6 @@
 # CSGO BR BOT
 
-<img src="./exemple.jpeg" alt="exemplo imagem" width="20%" >
+<img src="https://github.com/oscarkemuel/csgo-br-bot/blob/main/exemple.jpeg?raw=true" alt="exemplo imagem" width="20%" >
 
 > Bot para telegram que envia para o grupo <a href="https://t.me/botwesley" target="_blank">https://t.me/csgobrbot</a> uma lista de próximos jogos dos times brasileiros que competem fora do Brasil.
 > Lista de times: MIBR, FURIA, paiN, Liquid, GODSENT, TeamOne, FaZe, Sharks.
