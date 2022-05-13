@@ -1,4 +1,5 @@
-import HLTV, {  MatchPreview, Match, FullMatchResult, GameType } from 'hltv';
+import HLTV, {  Match, FullMatchResult } from 'hltv';
+import { flag } from 'country-emoji';
 import tinyurl from 'tinyurl-api';
 import teams from '../data.json';
 
@@ -22,6 +23,8 @@ interface IMatche {
 
 interface IMatchTemp extends Match{
   link?: string;
+  flagTeam1: string | undefined; 
+  flagTeam2: string | undefined;
 }
 
 interface ITeamResult extends ITeam {
@@ -71,7 +74,7 @@ async function newLinkToResult(matches: IResult[]){
 }
 
 export async function getMatches() {
-  let gamesPerTeam: Match[] = [];
+  let gamesPerTeam: IMatchTemp[] = [];
   
   const matches = await HLTV.getMatches();
 
@@ -82,8 +85,13 @@ export async function getMatches() {
     });
 
     if(game[0] !== undefined){
-      const math = await HLTV.getMatch({ id: game[0].id });
-      gamesPerTeam.push(math);
+      const match = await HLTV.getMatch({ id: game[0].id });
+      const matchComplete: IMatchTemp = { 
+        ...match, 
+        flagTeam1: await getFlag(match.team1?.id!),
+        flagTeam2: await getFlag(match.team2?.id!)
+       }
+      gamesPerTeam.push(matchComplete);
     }
   }
 
@@ -122,17 +130,20 @@ export async function getResults() {
   return gamesPerTeam;
 }
 
+async function getFlag(id: number) {
+  const team = await HLTV.getTeam({ id })
 
+  return flag(team.country.code)
+}
 
 export async function createMessageMatches(matches: IMatchTemp[]){
   let message = '\nPRÓXIMOS JOGOS\n';
 
   if(matches.length < 1){
     message = message.concat('------------------------------------------------');
-    message = message.concat('Sem partidas pŕoximas');
+    message = message.concat('Sem partidas próximas');
   }else{
     await Promise.all(matches.map(async (matche) => {
-      // format date
       const dateNew = new Date(matche.date!);
       let date = dateNew.toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"});
       if (date == new Date().toLocaleDateString("pt-BR", {timeZone: "America/Sao_Paulo"})){
@@ -143,9 +154,19 @@ export async function createMessageMatches(matches: IMatchTemp[]){
       time = time.substring(0, 5);
   
       message = message.concat('------------------------------------------------\n');
-      const bodyMessage = `${matche.team1!.name} vs ${matche.team2!.name}\n${date} - ${time} - ${matche.format?.location}\n${matche.event.name} \n`;
+      const bodyMessage = `${matche.flagTeam1} ${matche.team1!.name} vs ${matche.team2!.name} ${matche.flagTeam2}\n${date} - ${time} - ${matche.format?.location}\n${matche.event.name} \n`;
       message = message.concat(bodyMessage);
-      message = message.concat(`${matche.link}\n`);
+      message = message.concat(`${matche.link}\n\n`);
+
+      if(matche.streams.length > 0){
+        message = message.concat(`Streams:\n`);
+
+        for (let i = 0; i < 2; i++) {
+          const stream = matche.streams[i];
+          message = message.concat(`• ${stream.name}\n`);
+        }
+      }
+      
     }))
   }
 
