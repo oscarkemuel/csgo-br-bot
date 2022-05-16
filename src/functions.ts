@@ -133,7 +133,9 @@ export async function getResults() {
 async function getFlag(id: number) {
   const team = await HLTV.getTeam({ id })
 
-  return flag(team.country.code)
+  const flagString = flag(team.country.code);
+
+  return flagString !== undefined ? flagString : '';
 }
 
 export async function createMessageMatches(matches: IMatchTemp[]){
